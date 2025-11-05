@@ -1170,7 +1170,11 @@ public class PokeTradeBotPLZA(PokeTradeHub<PA9> Hub, PokeBotState Config) : Poke
 
     private void SetText(SAV9ZA sav, string text)
     {
-        System.IO.File.WriteAllText($"code{sav.OT}-{sav.DisplayTID}.txt", text);
+        System.IO.File.WriteAllText(
+            $"code{sav.OT}-{sav.DisplayTID}.txt",
+            text,
+            System.Text.Encoding.UTF8
+        );
     }
 
     public static class PokemonImageHelper
@@ -1238,7 +1242,9 @@ public class PokeTradeBotPLZA(PokeTradeHub<PA9> Hub, PokeBotState Config) : Poke
         }
         if (poke.Type == PokeTradeType.Random)
         {
-            SetText(sav, $"Trade code: {poke.Code:0000 0000}\r\nSending: {(Species)poke.TradeData.Species}");
+            //SetText(sav, $"Trade code: {poke.Code:0000 0000}\r\nSending: {(Species)poke.TradeData.Species}");for english
+            SetText(sav, $"交换密钥: {poke.Code:0000 0000}\r\n赠送精灵: {ShowdownTranslator<PA9>.GameStringsZh.Species[poke.TradeData.Species]}");//for chinese
+    
             string speciesImageUrl = TradeExtensions<PA9>.PokeImg(poke.TradeData, false, false);
             string savedPath = await PokemonImageHelper.DownloadAndSavePokemonImageAsync(speciesImageUrl);
         }
