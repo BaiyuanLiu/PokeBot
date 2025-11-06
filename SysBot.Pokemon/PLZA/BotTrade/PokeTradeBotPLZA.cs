@@ -14,6 +14,7 @@ using static SysBot.Pokemon.PokeDataOffsetsPLZA;
 using static SysBot.Pokemon.TradeHub.SpecialRequests;
 using System.Net.Http;
 using SysBot.Pokemon.Helpers;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SysBot.Pokemon;
 
@@ -182,6 +183,8 @@ public class PokeTradeBotPLZA(PokeTradeHub<PA9> Hub, PokeBotState Config) : Poke
     protected virtual async Task<TradePartnerWaitResult> WaitForTradePartner(CancellationToken token)
     {
         Log("Waiting for trainer...");
+        File.WriteAllText("msg.txt",$"状态:搜索中");
+
 
         // Initial delay to let the game populate NID pointer in memory
         await Task.Delay(3_000, token).ConfigureAwait(false);
@@ -1242,16 +1245,16 @@ public class PokeTradeBotPLZA(PokeTradeHub<PA9> Hub, PokeBotState Config) : Poke
         }
         if (poke.Type == PokeTradeType.Random)
         {
-            //SetText(sav, $"Trade code: {poke.Code:0000 0000}\r\nSending: {(Species)poke.TradeData.Species}");for english
-            SetText(sav, $"交换密钥: {poke.Code:0000 0000}\r\n赠送精灵: {ShowdownTranslator<PA9>.GameStringsZh.Species[poke.TradeData.Species]}");//for chinese
-    
+            //SetText(sav, $"Trade code: {poke.Code:0000 0000}\r\nSending: {(Species)poke.TradeData.Species}");for english 
+            File.WriteAllText("msg.txt", $"交换密钥: {poke.Code:0000 0000}\r\n赠送精灵: {ShowdownTranslator<PA9>.GameStringsZh.Species[poke.TradeData.Species]}\r\n持有物: {ShowdownTranslator<PA9>.GameStringsZh.Species[poke.TradeData.HeldItem]}");
             string speciesImageUrl = TradeExtensions<PA9>.PokeImg(poke.TradeData, false, false);
             string savedPath = await PokemonImageHelper.DownloadAndSavePokemonImageAsync(speciesImageUrl);
         }
 
         else
         {
-            SetText(sav, "Running a\nSpecific trade.");
+            File.WriteAllText("msg.txt",$"特殊交换");
+
         }
 
 
