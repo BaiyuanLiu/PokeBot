@@ -183,7 +183,6 @@ public class PokeTradeBotPLZA(PokeTradeHub<PA9> Hub, PokeBotState Config) : Poke
     protected virtual async Task<TradePartnerWaitResult> WaitForTradePartner(CancellationToken token)
     {
         Log("Waiting for trainer...");
-        File.WriteAllText("msg.txt",$"状态:搜索中");
 
 
         // Initial delay to let the game populate NID pointer in memory
@@ -1246,7 +1245,7 @@ public class PokeTradeBotPLZA(PokeTradeHub<PA9> Hub, PokeBotState Config) : Poke
         if (poke.Type == PokeTradeType.Random)
         {
             //SetText(sav, $"Trade code: {poke.Code:0000 0000}\r\nSending: {(Species)poke.TradeData.Species}");for english 
-            File.WriteAllText("msg.txt", $"交换密钥: {poke.Code:0000 0000}\r\n赠送精灵: {ShowdownTranslator<PA9>.GameStringsZh.Species[poke.TradeData.Species]}\r\n持有物: {ShowdownTranslator<PA9>.GameStringsZh.Species[poke.TradeData.HeldItem]}");
+            File.WriteAllText("msg.txt", $"交换密钥: {poke.Code:0000 0000}\r\n赠送精灵: {ShowdownTranslator<PA9>.GameStringsZh.Species[poke.TradeData.Species]}\r\n持有物: {ShowdownTranslator<PA9>.GameStringsZh.Item[poke.TradeData.HeldItem]}");
             string speciesImageUrl = TradeExtensions<PA9>.PokeImg(poke.TradeData, false, false);
             string savedPath = await PokemonImageHelper.DownloadAndSavePokemonImageAsync(speciesImageUrl);
         }
