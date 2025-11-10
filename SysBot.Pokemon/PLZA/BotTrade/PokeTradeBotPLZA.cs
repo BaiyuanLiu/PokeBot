@@ -198,25 +198,6 @@ public class PokeTradeBotPLZA(PokeTradeHub<PA9> Hub, PokeBotState Config) : Poke
 
         while (elapsed < maxWaitMs)
         {
-            // Safety check: verify we're still in a valid state (not kicked to menu/overworld)
-            var gameState = await GetGameState(token).ConfigureAwait(false);
-            if (gameState != 0x01 && gameState != 0x02)
-            {
-                Log("Connection interrupted. Restarting...");
-                return TradePartnerWaitResult.KickedToMenu;
-            }
-
-            // Additional safety check every 10 seconds: verify link code is still valid
-            if (elapsed % 10_000 < 500)
-            {
-                var currentCode = await GetCurrentLinkCode(token).ConfigureAwait(false);
-                if (currentCode == 0)
-                {
-                    Log("Connection error. Restarting...");
-                    return TradePartnerWaitResult.KickedToMenu;
-                }
-            }
-
             // Check if we've entered the trade box - this confirms a partner is connected
             if (await CheckIfInTradeBox(token).ConfigureAwait(false))
             {
@@ -691,13 +672,6 @@ public class PokeTradeBotPLZA(PokeTradeHub<PA9> Hub, PokeBotState Config) : Poke
         return data[0];
     }
 
-    private async Task<int> GetCurrentLinkCode(CancellationToken token)
-    {
-        var offset = await SwitchConnection.PointerAll(Offsets.LinkCodeTradePointer, token).ConfigureAwait(false);
-        var data = await SwitchConnection.ReadBytesAbsoluteAsync(offset, 4, token).ConfigureAwait(false);
-        return BitConverter.ToInt32(data, 0);
-    }
-
     private async Task<bool> CheckIfInTradeBox(CancellationToken token)
     {
         var offset = await SwitchConnection.PointerAll(Offsets.TradeBoxStatusPointer, token).ConfigureAwait(false);
@@ -829,39 +803,11 @@ public class PokeTradeBotPLZA(PokeTradeHub<PA9> Hub, PokeBotState Config) : Poke
             poke.TradeData = toSend;
             poke.Notifier.UpdateBatchProgress(currentTradeIndex + 1, toSend, poke.UniqueTradeID);
 
-            // For subsequent trades (after first), prepare the next Pokemon
             ulong boxOffset;
             if (currentTradeIndex > 0)
             {
-                poke.SendNotification(this, $"Trade {completedTrades} completed! **DO NOT OFFER YET** - Preparing your next Pokémon ({completedTrades + 1}/{totalBatchTrades})...");
-
-                // Wait for trade animation to fully complete
-                await Task.Delay(5_000, token).ConfigureAwait(false);
-
-                // Prepare the next Pokemon with AutoOT if needed
-                if (toSend.Species != 0)
-                {
-                    if (Hub.Config.Legality.UseTradePartnerInfo && !poke.IgnoreAutoOT && cachedTradePartnerInfo != null)
-                    {
-                        toSend = await ApplyAutoOT(toSend, cachedTradePartnerInfo, sav, token);
-                        tradesToProcess[currentTradeIndex] = toSend; // Update the list
-                    }
-                    else
-                    {
-                        // AutoOT not applied, inject directly
-                        boxOffset = await GetBoxStartOffset(token).ConfigureAwait(false);
-                        await SetBoxPokemonAbsolute(boxOffset, toSend, token, sav).ConfigureAwait(false);
-                    }
-                }
-
-                // Give game time to refresh trade offer display with injected Pokemon
+                poke.SendNotification(this, $"Trade {completedTrades} completed! Ready for trade {currentTradeIndex + 1}/{totalBatchTrades}.");
                 await Task.Delay(3_000, token).ConfigureAwait(false);
-
-                // NOW tell the user they can offer
-                poke.SendNotification(this, $"**Ready!** You can now offer your Pokémon for trade {currentTradeIndex + 1}/{totalBatchTrades}.");
-
-                // Additional delay to ensure we're ready to detect offers
-                await Task.Delay(2_000, token).ConfigureAwait(false);
             }
 
             // For first trade only - search for partner
@@ -1040,6 +986,31 @@ public class PokeTradeBotPLZA(PokeTradeHub<PA9> Hub, PokeBotState Config) : Poke
                 if (currentState == 0x02)
                 {
                     batchTradeAnimationStarted = true;
+
+                    // B1S1 has changed - immediately read and save the received Pokemon
+                    boxOffset = await GetBoxStartOffset(token).ConfigureAwait(false);
+                    var receivedPokemon = await ReadPokemon(boxOffset, BoxFormatSlotSize, token).ConfigureAwait(false);
+                    Log($"Trade {currentTradeIndex + 1} confirmed - received {(Species)receivedPokemon.Species}");
+
+                    // Immediately inject the next Pokemon if there is one
+                    if (currentTradeIndex + 1 < totalBatchTrades)
+                    {
+                        var nextPokemon = tradesToProcess[currentTradeIndex + 1];
+
+                        // Apply AutoOT if needed
+                        if (Hub.Config.Legality.UseTradePartnerInfo && !poke.IgnoreAutoOT && cachedTradePartnerInfo != null)
+                        {
+                            nextPokemon = await ApplyAutoOT(nextPokemon, cachedTradePartnerInfo, sav, token);
+                            tradesToProcess[currentTradeIndex + 1] = nextPokemon;
+                        }
+                        else
+                        {
+                            // No AutoOT - inject directly
+                            await SetBoxPokemonAbsolute(boxOffset, nextPokemon, token, sav).ConfigureAwait(false);
+                        }
+
+                        Log($"Next Pokemon ({currentTradeIndex + 2}/{totalBatchTrades}) injected into B1S1");
+                    }
                 }
             }
 
@@ -1356,35 +1327,15 @@ public class PokeTradeBotPLZA(PokeTradeHub<PA9> Hub, PokeBotState Config) : Poke
         {
             Hub.Config.Stream.StartEnterCode(this);
         }
-        // Read current code to determine if we need to clear
-        var currentCode = await GetCurrentLinkCode(token).ConfigureAwait(false);
 
-        // If there's a non-zero code, clear it
-        if (currentCode != 0)
-        {
-            var formattedCode = $"{currentCode:00000000}";
-            var digitCount = formattedCode.Length;
-            await Task.Delay(1_000, token).ConfigureAwait(false);
-
-            for (int i = 0; i < digitCount; i++)
-                await Click(B, 0, token).ConfigureAwait(false);
-
-            await Task.Delay(1_000, token).ConfigureAwait(false);
-        }
-
-
+        // Clear any existing code by holding B for 4 seconds
+        await Task.Delay(1_000, token).ConfigureAwait(false);
+        await PressAndHold(B, 4_000, 0, token).ConfigureAwait(false);
+        await Task.Delay(1_000, token).ConfigureAwait(false);
 
         // Enter the new code
         await EnterLinkCode(code, Hub.Config, token).ConfigureAwait(false);
         await Click(PLUS, 2_000, token).ConfigureAwait(false);
-
-        // Verify the code was entered correctly (memory updates immediately after PLUS)
-        var verifyCode = await GetCurrentLinkCode(token).ConfigureAwait(false);
-
-        if (verifyCode != code)
-        {
-            return LinkCodeEntryResult.VerificationFailedMismatch;
-        }
 
         return LinkCodeEntryResult.Success;
     }
