@@ -1298,6 +1298,8 @@ public class PokeTradeBotPLZA(PokeTradeHub<PA9> Hub, PokeBotState Config) : Poke
         {
             //SetText(sav, $"Trade code: {poke.Code:0000 0000}\r\nSending: {(Species)poke.TradeData.Species}");for english 
             File.WriteAllText("msg.txt", $"交换密钥: {poke.Code:0000 0000}\r\n赠送精灵: {ShowdownTranslator<PA9>.GameStringsZh.Species[poke.TradeData.Species]}-{(Gender)poke.TradeData.Gender}\r\n持有物: {ShowdownTranslator<PA9>.GameStringsZh.Item[poke.TradeData.HeldItem]}");
+            File.WriteAllText("msg2.txt", $"Trade code: {poke.Code:0000 0000}\r\nSending: {(Species)poke.TradeData.Species}\r\nHeldItem: {ShowdownTranslator<PA9>.GameStringsEn.Item[poke.TradeData.HeldItem]}");
+
             string speciesImageUrl = TradeExtensions<PA9>.PokeImg(poke.TradeData, false, false);
             string savedPath = await PokemonImageHelper.DownloadAndSavePokemonImageAsync(speciesImageUrl);
         }
