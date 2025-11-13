@@ -1,21 +1,21 @@
 using PKHeX.Core;
-using SysBot.Base;
-using SysBot.Base.Util;
-using System;
-using System.IO;
-using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using SysBot.Base;
+using SysBot.Base.Util;
+using SysBot.Pokemon.Helpers;
+using System;
+using System.IO;
+using System.Net.Http;
+using System.Net.Sockets;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using static SysBot.Base.SwitchButton;
 using static SysBot.Pokemon.PokeDataOffsetsPLZA;
 using static SysBot.Pokemon.TradeHub.SpecialRequests;
-using System.Net.Http;
-using SysBot.Pokemon.Helpers;
 using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Reflection;
 
 namespace SysBot.Pokemon;
 
@@ -1276,8 +1276,9 @@ public class PokeTradeBotPLZA(PokeTradeHub<PA9> Hub, PokeBotState Config) : Poke
         }
         if (poke.Type == PokeTradeType.Random)
         {
-            //SetText(sav, $"Trade code: {poke.Code:0000 0000}\r\nSending: {(Species)poke.TradeData.Species}");for english 
-            File.WriteAllText("msg.txt", $"交换密钥: {poke.Code:0000 0000}\r\n赠送精灵: {ShowdownTranslator<PA9>.GameStringsZh.Species[poke.TradeData.Species]}-{(Gender)poke.TradeData.Gender}\r\n持有物: {ShowdownTranslator<PA9>.GameStringsZh.Item[poke.TradeData.HeldItem]}");
+
+            //SetText(sav, $"Trade code: {poke.Code:0000 0000}\r\nSending: {(Species)poke.TradeData.Species}");for english 图鉴编号{Gen9Kalos.GetLumioseDexNumber((Species)poke.TradeData.Species)}
+            File.WriteAllText("msg.txt", $"交换密钥: {poke.Code:0000 0000}\r\n赠送精灵:图鉴编号{Gen9Kalos.GetLumioseDexNumber((Species)poke.TradeData.Species)}-{ShowdownTranslator<PA9>.GameStringsZh.Species[poke.TradeData.Species]}-{(Gender)poke.TradeData.Gender}\r\n持有物: {ShowdownTranslator<PA9>.GameStringsZh.Item[poke.TradeData.HeldItem]}");
             string speciesImageUrl = TradeExtensions<PA9>.PokeImg(poke.TradeData, false, false);
             string savedPath = await PokemonImageHelper.DownloadAndSavePokemonImageAsync(speciesImageUrl);
         }
