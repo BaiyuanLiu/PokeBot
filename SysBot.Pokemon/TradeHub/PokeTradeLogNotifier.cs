@@ -89,7 +89,9 @@ public class PokeTradeLogNotifier<T> : IPokeTradeNotifier<T> where T : PKM, new(
     public void TradeInitialize(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
     {
         var batchInfo = info.TotalBatchTrades > 1 ? $"[Batch trade starting - {info.TotalBatchTrades} total] " : "";
+
         LogUtil.LogInfo(routine.Connection.Label, $"{batchInfo}Starting trade loop for {info.Trainer.TrainerName}, sending {GameInfo.GetStrings("en").Species[info.TradeData.Species]}");
+
     }
 
     public void TradeSearching(PokeRoutineExecutor<T> routine, PokeTradeDetail<T> info)
