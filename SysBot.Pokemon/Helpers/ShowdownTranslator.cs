@@ -256,7 +256,28 @@ public class ShowdownTranslator<T> where T : PKM
 
         return result;
     }
-
+    // 新增：根据 Scale 数值范围获取体型描述
+    public static string GetScaleDescription(int scale)
+    {
+        // 遍历配置的范围，返回匹配的描述
+        foreach (var range in ShowdownTranslatorDictionary.ScaleRanges)
+        {
+            if (scale >= range.Min && scale <= range.Max)
+                return range.Desc;
+        }
+        // 若不在任何范围内（如异常值），返回空或默认描述
+        return string.Empty;
+    }
+    public static string GetGenderSymbol(Gender gender)
+    {
+        return gender switch
+        {
+            Gender.Male => "♂",    // 雄性符号
+            Gender.Female => "♀",  // 雌性符号
+            Gender.Genderless => "-",  // 无性别符号（可替换为其他符号如"—"）
+            _ => string.Empty
+        };
+    }
     public static bool IsPS(string str) => GameStringsEn.Species.Skip(1).Any(str.Contains);
 
 }

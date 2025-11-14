@@ -104,7 +104,15 @@ public class ShowdownTranslatorDictionary
         { "简体中文", "ChineseS" },
         { "繁体中文", "ChineseT" }
     };
-
+    // 在 ShowdownTranslatorDictionary 类中添加
+    public static List<(int Min, int Max, string Desc)> ScaleRanges = new List<(int, int, string)>
+    {
+        (0, 15, "XS"),    // 0-10 对应 XS
+        (16, 47, "S"),    // 11-47 对应 S
+        (48, 209, "M"),   // 示例：中间范围对应 M（可根据实际需求调整范围）
+        (210, 239, "L"),  // 示例：208-254 对应 L
+        (240, 255, "XL")  // 255 对应 XL
+    };
     #region 形态中文ps字典，感谢ppllouf
     public static Dictionary<string, string> formDict = new Dictionary<string, string> {
         {"阿罗拉","Alola"},
