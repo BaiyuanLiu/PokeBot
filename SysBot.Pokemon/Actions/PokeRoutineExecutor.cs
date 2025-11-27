@@ -168,6 +168,7 @@ public abstract class PokeRoutineExecutor<T>(IConsoleBotManaged<IConsoleConnecti
             if (cd != 0 && TimeSpan.FromMinutes(cd) > delta)
             {
                 Log($"Found {user.TrainerName} ignoring the {cd} minute trade cooldown. Last encountered {delta.TotalMinutes:F1} minutes ago.");
+                File.WriteAllText("msg.txt", $"请自动退出\r\n上次见到你{delta.TotalMinutes:F1}分钟之前\r\n规则是{cd}连接一次");
                 return PokeTradeResult.SuspiciousActivity;
             }
 

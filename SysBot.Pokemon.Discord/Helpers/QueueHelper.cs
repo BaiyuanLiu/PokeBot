@@ -516,109 +516,118 @@ public static class QueueHelper<T> where T : PKM, new()
 
     private static async Task<(string, DiscordColor)> PrepareEmbedDetails(T pk)
     {
-        string embedImageUrl;
-        string speciesImageUrl;
+        string embedImageUrl = string.Empty;
+        DiscordColor embedColor = DiscordColor.Default; 
+        embedImageUrl = "https://raw.githubusercontent.com/hexbyt3/sprites/main/default.png"; 
+        embedColor = DiscordColor.Blue; // not apply to raspberry
+ 
+        return (embedImageUrl, embedColor);
+        //        string embedImageUrl;
+        //        string speciesImageUrl;
 
-        if (pk.IsEgg)
-        {
-            string eggImageUrl = GetEggTypeImageUrl(pk);
-            speciesImageUrl = TradeExtensions<T>.PokeImg(pk, false, true, null);
-            System.Drawing.Image combinedImage = await OverlaySpeciesOnEgg(eggImageUrl, speciesImageUrl);
-            embedImageUrl = SaveImageLocally(combinedImage);
-        }
-        else
-        {
-            bool canGmax = pk is PK8 pk8 && pk8.CanGigantamax;
-            speciesImageUrl = TradeExtensions<T>.PokeImg(pk, canGmax, false, SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.PreferredImageSize);
-            embedImageUrl = speciesImageUrl;
-        }
+        //        if (pk.IsEgg)
+        //        {
+        //            string eggImageUrl = GetEggTypeImageUrl(pk);
+        //            speciesImageUrl = TradeExtensions<T>.PokeImg(pk, false, true, null);
+        //            System.Drawing.Image combinedImage = await OverlaySpeciesOnEgg(eggImageUrl, speciesImageUrl);
+        //            embedImageUrl = SaveImageLocally(combinedImage);
+        //        }
+        //        else
+        //        {
+        //            bool canGmax = pk is PK8 pk8 && pk8.CanGigantamax;
+        //            speciesImageUrl = TradeExtensions<T>.PokeImg(pk, canGmax, false, SysCord<T>.Runner.Config.Trade.TradeEmbedSettings.PreferredImageSize);
+        //            embedImageUrl = speciesImageUrl;
+        //        }
 
-        var strings = GameInfo.GetStrings("en");
-        string ballName = strings.balllist[pk.Ball];
-        if (ballName.Contains("(LA)"))
-        {
-            ballName = "la" + ballName.Replace(" ", "").Replace("(LA)", "").ToLower();
-        }
-        else
-        {
-            ballName = ballName.Replace(" ", "").ToLower();
-        }
+        //        var strings = GameInfo.GetStrings("en");
+        //        string ballName = strings.balllist[pk.Ball];
+        //        if (ballName.Contains("(LA)"))
+        //        {
+        //            ballName = "la" + ballName.Replace(" ", "").Replace("(LA)", "").ToLower();
+        //        }
+        //        else
+        //        {
+        //            ballName = ballName.Replace(" ", "").ToLower();
+        //        }
 
-        string ballImgUrl = $"https://raw.githubusercontent.com/hexbyt3/sprites/main/AltBallImg/20x20/{ballName}.png";
+        //        string ballImgUrl = $"https://raw.githubusercontent.com/hexbyt3/sprites/main/AltBallImg/20x20/{ballName}.png";
 
-        if (Uri.TryCreate(embedImageUrl, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeFile)
-        {
-#pragma warning disable CA1416 // Validate platform compatibility
-            using var localImage = await Task.Run(() => System.Drawing.Image.FromFile(uri.LocalPath));
-#pragma warning restore CA1416 // Validate platform compatibility
-            using var ballImage = await LoadImageFromUrl(ballImgUrl);
-            if (ballImage != null)
-            {
-#pragma warning disable CA1416 // Validate platform compatibility
-                using (var graphics = Graphics.FromImage(localImage))
-                {
-                    var ballPosition = new Point(localImage.Width - ballImage.Width, localImage.Height - ballImage.Height);
-                    graphics.DrawImage(ballImage, ballPosition);
-                }
-#pragma warning restore CA1416 // Validate platform compatibility
-                embedImageUrl = SaveImageLocally(localImage);
-            }
-        }
-        else
-        {
-            (System.Drawing.Image? finalCombinedImage, bool ballImageLoaded) = await OverlayBallOnSpecies(speciesImageUrl, ballImgUrl);
-            if (finalCombinedImage != null)
-            {
-                embedImageUrl = SaveImageLocally(finalCombinedImage);
-            }
-            else
-            {
-                // Fall back to species image if overlay failed
-                embedImageUrl = speciesImageUrl;
-            }
+        //        if (Uri.TryCreate(embedImageUrl, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeFile)
+        //        {
+        //#pragma warning disable CA1416 // Validate platform compatibility
+        //            using var localImage = await Task.Run(() => System.Drawing.Image.FromFile(uri.LocalPath));
+        //#pragma warning restore CA1416 // Validate platform compatibility
+        //            using var ballImage = await LoadImageFromUrl(ballImgUrl);
+        //            if (ballImage != null)
+        //            {
+        //#pragma warning disable CA1416 // Validate platform compatibility
+        //                using (var graphics = Graphics.FromImage(localImage))
+        //                {
+        //                    var ballPosition = new Point(localImage.Width - ballImage.Width, localImage.Height - ballImage.Height);
+        //                    graphics.DrawImage(ballImage, ballPosition);
+        //                }
+        //#pragma warning restore CA1416 // Validate platform compatibility
+        //                embedImageUrl = SaveImageLocally(localImage);
+        //            }
+        //        }
+        //        else
+        //        {
+        //            (System.Drawing.Image? finalCombinedImage, bool ballImageLoaded) = await OverlayBallOnSpecies(speciesImageUrl, ballImgUrl);
+        //            if (finalCombinedImage != null)
+        //            {
+        //                embedImageUrl = SaveImageLocally(finalCombinedImage);
+        //            }
+        //            else
+        //            {
+        //                // Fall back to species image if overlay failed
+        //                embedImageUrl = speciesImageUrl;
+        //            }
 
-            if (!ballImageLoaded)
-            {
-                Console.WriteLine($"Ball image could not be loaded: {ballImgUrl}");
-            }
-        }
+        //            if (!ballImageLoaded)
+        //            {
+        //                Console.WriteLine($"Ball image could not be loaded: {ballImgUrl}");
+        //            }
+        //        }
 
-        (int R, int G, int B) = await GetDominantColorAsync(embedImageUrl);
-        return (embedImageUrl, new DiscordColor(R, G, B));
+        //        (int R, int G, int B) = await GetDominantColorAsync(embedImageUrl);
+        //        return (embedImageUrl, new DiscordColor(R, G, B));
     }
 
     private static async Task<(System.Drawing.Image?, bool)> OverlayBallOnSpecies(string speciesImageUrl, string ballImageUrl)
     {
-        using var speciesImage = await LoadImageFromUrl(speciesImageUrl);
-        if (speciesImage == null)
-        {
-            Console.WriteLine("Species image could not be loaded.");
-            return (null, false);
-        }
+        Console.WriteLine("Image overlay is disabled (commented out)");
+        return (null, false);
+        //due to System.Drawing not being supported on all platforms (pi), disabling for now
+        //        using var speciesImage = await LoadImageFromUrl(speciesImageUrl);
+        //        if (speciesImage == null)
+        //        {
+        //            Console.WriteLine("Species image could not be loaded.");
+        //            return (null, false);
+        //        }
 
-        var ballImage = await LoadImageFromUrl(ballImageUrl);
-        if (ballImage == null)
-        {
-            Console.WriteLine($"Ball image could not be loaded: {ballImageUrl}");
-#pragma warning disable CA1416 // Validate platform compatibility
-            return ((System.Drawing.Image)speciesImage.Clone(), false);
-#pragma warning restore CA1416 // Validate platform compatibility
-        }
+        //        var ballImage = await LoadImageFromUrl(ballImageUrl);
+        //        if (ballImage == null)
+        //        {
+        //            Console.WriteLine($"Ball image could not be loaded: {ballImageUrl}");
+        //#pragma warning disable CA1416 // Validate platform compatibility
+        //            return ((System.Drawing.Image)speciesImage.Clone(), false);
+        //#pragma warning restore CA1416 // Validate platform compatibility
+        //        }
 
-        using (ballImage)
-        {
-#pragma warning disable CA1416 // Validate platform compatibility
-            using (var graphics = Graphics.FromImage(speciesImage))
-            {
-                var ballPosition = new Point(speciesImage.Width - ballImage.Width, speciesImage.Height - ballImage.Height);
-                graphics.DrawImage(ballImage, ballPosition);
-            }
-#pragma warning restore CA1416 // Validate platform compatibility
+        //        using (ballImage)
+        //        {
+        //#pragma warning disable CA1416 // Validate platform compatibility
+        //            using (var graphics = Graphics.FromImage(speciesImage))
+        //            {
+        //                var ballPosition = new Point(speciesImage.Width - ballImage.Width, speciesImage.Height - ballImage.Height);
+        //                graphics.DrawImage(ballImage, ballPosition);
+        //            }
+        //#pragma warning restore CA1416 // Validate platform compatibility
 
-#pragma warning disable CA1416 // Validate platform compatibility
-            return ((System.Drawing.Image)speciesImage.Clone(), true);
-#pragma warning restore CA1416 // Validate platform compatibility
-        }
+        //#pragma warning disable CA1416 // Validate platform compatibility
+        //            return ((System.Drawing.Image)speciesImage.Clone(), true);
+        //#pragma warning restore CA1416 // Validate platform compatibility
+        //        }
     }
 
     private static async Task<System.Drawing.Image> OverlaySpeciesOnEgg(string eggImageUrl, string speciesImageUrl)
@@ -666,32 +675,34 @@ public static class QueueHelper<T> where T : PKM, new()
 
     private static async Task<System.Drawing.Image?> LoadImageFromUrl(string url)
     {
-        using HttpClient client = new();
-        HttpResponseMessage response = await client.GetAsync(url);
-        if (!response.IsSuccessStatusCode)
-        {
-            Console.WriteLine($"Failed to load image from {url}. Status code: {response.StatusCode}");
-            return null;
-        }
+        Console.WriteLine($"Failed to create image from stream. URL: {url}");
+        return null;
+        //        using HttpClient client = new();
+        //        HttpResponseMessage response = await client.GetAsync(url);
+        //        if (!response.IsSuccessStatusCode)
+        //        {
+        //            Console.WriteLine($"Failed to load image from {url}. Status code: {response.StatusCode}");
+        //            return null;
+        //        }
 
-        Stream stream = await response.Content.ReadAsStreamAsync();
-        if (stream == null || stream.Length == 0)
-        {
-            Console.WriteLine($"No data or empty stream received from {url}");
-            return null;
-        }
+        //        Stream stream = await response.Content.ReadAsStreamAsync();
+        //        if (stream == null || stream.Length == 0)
+        //        {
+        //            Console.WriteLine($"No data or empty stream received from {url}");
+        //            return null;
+        //        }
 
-        try
-        {
-#pragma warning disable CA1416 // Validate platform compatibility
-            return System.Drawing.Image.FromStream(stream);
-#pragma warning restore CA1416 // Validate platform compatibility
-        }
-        catch (ArgumentException ex)
-        {
-            Console.WriteLine($"Failed to create image from stream. URL: {url}, Exception: {ex}");
-            return null;
-        }
+        //        try
+        //        {
+        //#pragma warning disable CA1416 // Validate platform compatibility
+        //            return System.Drawing.Image.FromStream(stream);
+        //#pragma warning restore CA1416 // Validate platform compatibility
+        //        }
+        //        catch (ArgumentException ex)
+        //        {
+        //            Console.WriteLine($"Failed to create image from stream. URL: {url}, Exception: {ex}");
+        //            return null;
+        //        }
     }
 
     private static async Task ScheduleFileDeletion(string filePath, int delayInMilliseconds)

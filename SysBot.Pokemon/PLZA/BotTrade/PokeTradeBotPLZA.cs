@@ -7,9 +7,16 @@ using System.IO;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using static SysBot.Base.SwitchButton;
 using static SysBot.Pokemon.PokeDataOffsetsPLZA;
 using static SysBot.Pokemon.TradeHub.SpecialRequests;
+using System.Net.Http;
+using SysBot.Pokemon.Helpers;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Reflection;
 
 namespace SysBot.Pokemon;
 
@@ -182,6 +189,7 @@ public class PokeTradeBotPLZA(PokeTradeHub<PA9> Hub, PokeBotState Config) : Poke
     protected virtual async Task<TradePartnerWaitResult> WaitForTradePartner(CancellationToken token)
     {
         Log("Waiting for trainer...");
+
 
         // Initial delay to let the game populate NID pointer in memory
         await Task.Delay(3_000, token).ConfigureAwait(false);
@@ -1255,6 +1263,38 @@ public class PokeTradeBotPLZA(PokeTradeHub<PA9> Hub, PokeBotState Config) : Poke
         }
     }
 
+    private void SetText(SAV9ZA sav, string text)
+    {
+        System.IO.File.WriteAllText(
+            $"code{sav.OT}-{sav.DisplayTID}.txt",
+            text,
+            System.Text.Encoding.UTF8
+        );
+    }
+
+    public static class PokemonImageHelper
+    {
+        public static async Task<string> DownloadAndSavePokemonImageAsync(string speciesImageUrl)
+        {
+            using var httpClient = new HttpClient();
+            using var stream = await httpClient.GetStreamAsync(speciesImageUrl);
+
+            using var image = await Image.LoadAsync<Rgba32>(stream);
+
+
+            string imagesFolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SavedImages");
+            Directory.CreateDirectory(imagesFolderPath);
+
+            string filePath = Path.Combine(imagesFolderPath, $"image.png");
+
+
+            await image.SaveAsPngAsync(filePath);
+
+            return filePath;
+        }
+    }
+
+
     private async Task<PokeTradeResult> PerformLinkCodeTrade(SAV9ZA sav, PokeTradeDetail<PA9> poke, CancellationToken token)
     {
         // Check if trade was canceled by user
@@ -1295,6 +1335,23 @@ public class PokeTradeBotPLZA(PokeTradeHub<PA9> Hub, PokeBotState Config) : Poke
             var offset = await GetBoxStartOffset(token).ConfigureAwait(false);
             await SetBoxPokemonAbsolute(offset, toSend, token, sav).ConfigureAwait(false);
         }
+        if (poke.Type == PokeTradeType.Random)
+        {
+            //SetText(sav, $"Trade code: {poke.Code:0000 0000}\r\nSending: {(Species)poke.TradeData.Species}");for english 
+            File.WriteAllText("msg.txt", $"交换密钥: {poke.Code:0000 0000}\r\n赠送精灵: {ShowdownTranslator<PA9>.GameStringsZh.Species[poke.TradeData.Species]}-{(Gender)poke.TradeData.Gender}\r\n持有物: {ShowdownTranslator<PA9>.GameStringsZh.Item[poke.TradeData.HeldItem]}");
+            File.WriteAllText("msg2.txt", $"Trade code: {poke.Code:0000 0000}\r\nSending: {(Species)poke.TradeData.Species}\r\nHeldItem: {ShowdownTranslator<PA9>.GameStringsEn.Item[poke.TradeData.HeldItem]}");
+
+            string speciesImageUrl = TradeExtensions<PA9>.PokeImg(poke.TradeData, false, false);
+            string savedPath = await PokemonImageHelper.DownloadAndSavePokemonImageAsync(speciesImageUrl);
+        }
+
+        else
+        {
+            File.WriteAllText("msg.txt",$"特殊交换");
+
+        }
+
+
 
         StartFromOverworld = false;
 

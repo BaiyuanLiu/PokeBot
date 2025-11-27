@@ -574,7 +574,7 @@ public class TradeModule<T> : ModuleBase<SocketCommandContext> where T : PKM, ne
         var trades = BatchHelpers<T>.ParseBatchTradeContent(content);
 
         // Use configured max trades per batch, default to 4 if less than 1
-        int maxTradesAllowed = tradeConfig.MaxPkmsPerTrade > 0 ? tradeConfig.MaxPkmsPerTrade : 4;
+        int maxTradesAllowed = tradeConfig.MaxPkmsPerTrade > 0 ? tradeConfig.MaxPkmsPerTrade : 60;
 
         if (trades.Count > maxTradesAllowed)
         {
